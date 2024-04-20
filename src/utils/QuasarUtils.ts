@@ -2,6 +2,14 @@ import { Notify } from 'quasar';
 import { NamedColor } from 'quasar/dist/types/api';
 
 /**
+ * 错误通知
+ * @param msg
+ */
+export const errorMsg = (msg: string) => {
+  notifyT(msg, 'negative');
+}
+
+/**
  * 按照类型显示通知
  * @param message
  * @param type

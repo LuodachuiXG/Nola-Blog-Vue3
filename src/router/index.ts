@@ -1,7 +1,13 @@
 import { route } from 'quasar/wrappers';
-import { createMemoryHistory, createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
+import {
+  createMemoryHistory,
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+} from 'vue-router';
 
 import routes from './routes';
+import { useBlogInfoStore } from 'stores/example-store';
 
 /*
  * If not building with SSR mode, you can
@@ -15,9 +21,11 @@ import routes from './routes';
 export default route(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
-    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory);
+    : process.env.VUE_ROUTER_MODE === 'history'
+    ? createWebHistory
+    : createWebHashHistory;
 
-  return createRouter({
+  const router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
 
@@ -26,4 +34,23 @@ export default route(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
+
+  /**
+   * 导航守卫
+   */
+  router.beforeEach(async (to, from) => {
+    const blogInfo = useBlogInfoStore();
+    if (blogInfo.blogInfo) {
+      document.title =
+        to.meta.displayName?.toString() +
+        ' - ' +
+        blogInfo.blogInfo.title +
+        ' | ' +
+        blogInfo.blogInfo.subtitle;
+    } else {
+      document.title = to.meta.displayName?.toString() ?? '';
+    }
+  });
+
+  return router;
 });

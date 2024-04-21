@@ -4,7 +4,36 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+    children: [
+      {
+        path: '',
+        component: () => import('pages/HomePage.vue'),
+        meta: {
+          displayName: '首页',
+        },
+      },
+      {
+        path: 'tag',
+        component: () => import('pages/TagPage.vue'),
+        meta: {
+          displayName: '标签',
+        },
+      },
+      {
+        path: 'category',
+        component: () => import('pages/CategoryPage.vue'),
+        meta: {
+          displayName: '分类',
+        },
+      },
+      {
+        path: 'link',
+        component: () => import('pages/LinkPage.vue'),
+        meta: {
+          displayName: '友情链接',
+        },
+      },
+    ],
   },
 
   // Always leave this as last one,

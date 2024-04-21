@@ -1,100 +1,3 @@
-<template>
-  <q-layout view="hHh lpR fFf">
-    <q-header class="text-white" :class="{ 'bg-dark': $q.dark.isActive }">
-      <q-toolbar>
-        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
-
-        <q-toolbar-title>
-          {{ blogInfo?.title }} | {{ blogInfo?.subtitle }}
-        </q-toolbar-title>
-        <q-btn
-          dense
-          flat
-          round
-          :icon="
-            $q.dark.mode === 'auto'
-              ? 'computer'
-              : $q.dark.mode
-              ? 'dark_mode'
-              : 'light_mode'
-          "
-          @click="toggleDarkMode"
-        />
-      </q-toolbar>
-    </q-header>
-
-    <q-drawer v-model="leftDrawerOpen" side="left" bordered>
-      <q-scroll-area style="height: calc(100% - 160px); margin-top: 160px">
-        <q-list padding>
-          <q-item clickable v-ripple>
-            <q-item-section avatar>
-              <q-icon name="inbox" />
-            </q-item-section>
-
-            <q-item-section> Inbox</q-item-section>
-          </q-item>
-
-          <q-item active clickable v-ripple>
-            <q-item-section avatar>
-              <q-icon name="star" />
-            </q-item-section>
-
-            <q-item-section> Star</q-item-section>
-          </q-item>
-
-          <q-item clickable v-ripple>
-            <q-item-section avatar>
-              <q-icon name="send" />
-            </q-item-section>
-
-            <q-item-section> Send</q-item-section>
-          </q-item>
-
-          <q-item clickable v-ripple>
-            <q-item-section avatar>
-              <q-icon name="drafts" />
-            </q-item-section>
-
-            <q-item-section> Drafts</q-item-section>
-          </q-item>
-        </q-list>
-      </q-scroll-area>
-
-      <q-img
-        class="absolute-top"
-        :src="blogger?.avatar ? baseUrl + blogger.avatar : 'https://cdn.quasar.dev/img/material.png'"
-        style="height: 160px;"
-      >
-        <div class="blogger-div">
-          <div class="absolute-bottom bg-transparent" style="bottom: 15px;left: 15px">
-            <div>
-              <q-avatar size="56px" class="q-mb-sm">
-                <img
-                  style="object-fit: cover"
-                  :src="blogger?.avatar ? baseUrl + blogger.avatar : ''"
-                  :alt="blogger?.displayName"
-                />
-              </q-avatar>
-              <div class="text-weight-bold">{{ blogger?.displayName }}</div>
-              <div v-if="blogger?.email">{{ blogger?.email }}</div>
-              <div v-if="blogger?.description" class="description text-caption">
-                {{ blogger?.description }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </q-img>
-    </q-drawer>
-
-<!--    <q-footer class="text-white" :class="{ 'bg-dark': $q.dark.isActive }">-->
-<!--      ©我不是罗大锤-->
-<!--    </q-footer>-->
-    <q-page-container>
-      <router-view />
-    </q-page-container>
-  </q-layout>
-</template>
-
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
@@ -105,8 +8,15 @@ import { BlogInfo } from 'src/models/BlogInfo';
 import { updateFavicon } from 'src/utils/Utils';
 import { getBlogger } from 'src/apis/bloggerApi';
 import { Blogger } from 'src/models/Blogger';
+import { getMenus } from 'src/apis/menuApi';
+import { Menu } from 'src/models/Menu';
+import { useRouter } from 'vue-router';
+import { useBlogInfoStore } from 'stores/example-store';
 
 const $q = useQuasar();
+const blogInfoStore = useBlogInfoStore();
+
+const router = useRouter();
 
 // 请求基地址
 const baseUrl = import.meta.env.VITE_BASE_URL;
@@ -118,6 +28,11 @@ const leftDrawerOpen = ref(true);
 const blogInfo = ref<BlogInfo | null>(null);
 // 博主信息
 const blogger = ref<Blogger | null>(null);
+// 菜单项
+const menus = ref<Array<Menu>>([]);
+
+// 当前选择的菜单项
+const currentMenuIndex = ref(-1);
 
 onMounted(() => {
   // 读取设置
@@ -126,7 +41,8 @@ onMounted(() => {
   initBlogInfo();
   // 初始化博主信息
   initBlogger();
-  console.log(baseUrl);
+  // 初始化菜单项
+  initMenus();
 });
 
 /**
@@ -136,6 +52,7 @@ const initBlogInfo = () => {
   getBlogInfo()
     .then((res) => {
       blogInfo.value = res.data as BlogInfo;
+      blogInfoStore.setBlogInfo(blogInfo.value);
       if (blogInfo.value === null || blogInfo.value.blogger === null) {
         // 博客或者博主尚未初始化，跳转后台页面
         window.location.href = '/console';
@@ -160,11 +77,21 @@ const initBlogger = () => {
   getBlogger()
     .then((res) => {
       blogger.value = res.data;
-      console.log(blogger.value);
     })
     .catch((err) => {
       errorMsg(err);
     });
+};
+
+/**
+ * 初始化菜单项
+ */
+const initMenus = () => {
+  getMenus()
+    .then((res) => {
+      menus.value = res.data;
+    })
+    .catch((err) => errorMsg(err));
 };
 
 /**
@@ -173,6 +100,8 @@ const initBlogger = () => {
 const loadSetting = () => {
   // 暗色模式
   const darkMode = localStorage.getItem(StoreEnum.DARK_MODE);
+  // 暗色模式默认跟随系统
+  if (!darkMode) return $q.dark.set('auto');
   if (darkMode === 'true') {
     $q.dark.set(true);
   } else if (darkMode === 'auto') {
@@ -213,13 +142,135 @@ const toggleDarkMode = () => {
   localStorage.setItem(StoreEnum.DARK_MODE, 'false');
   notifyC('亮色模式', 'primary');
 };
+
+/**
+ * 菜单项点击
+ * @param index 菜单项索引
+ * @param menu 菜单接口
+ */
+const onMenuItemClick = (index: number, menu: Menu) => {
+  currentMenuIndex.value = index;
+  if (menu.href) {
+    router.push({
+      path: menu.href,
+    });
+  }
+};
 </script>
+
+<template>
+  <q-layout view="hHh lpr lFf">
+    <q-header class="text-white" :class="{ 'bg-dark': $q.dark.isActive }">
+      <q-toolbar>
+        <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
+
+        <q-toolbar-title>
+          {{ blogInfo?.title }} | {{ blogInfo?.subtitle }}
+        </q-toolbar-title>
+        <q-btn
+          dense
+          flat
+          round
+          :icon="
+            $q.dark.mode === 'auto'
+              ? 'computer'
+              : $q.dark.mode
+              ? 'dark_mode'
+              : 'light_mode'
+          "
+          @click="toggleDarkMode"
+        />
+      </q-toolbar>
+    </q-header>
+
+    <q-drawer v-model="leftDrawerOpen" side="left" bordered>
+      <q-scroll-area style="height: calc(100% - 160px); margin-top: 160px">
+        <q-list padding>
+          <q-item
+            clickable
+            v-ripple
+            v-for="(menu, index) in menus"
+            :key="index"
+            :active="index === currentMenuIndex"
+            @click="onMenuItemClick(index, menu)"
+          >
+            <q-item-section avatar>
+              <q-icon name="menu" />
+            </q-item-section>
+
+            <q-item-section>{{ menu.displayName }}</q-item-section>
+          </q-item>
+        </q-list>
+      </q-scroll-area>
+
+      <q-img
+        class="absolute-top"
+        :src="
+          blogger?.avatar
+            ? baseUrl + blogger.avatar
+            : 'https://cdn.quasar.dev/img/material.png'
+        "
+        style="height: 160px"
+      >
+        <div class="blogger-div">
+          <div
+            class="absolute-bottom bg-transparent"
+            style="bottom: 15px; left: 15px"
+          >
+            <div>
+              <q-avatar size="56px" class="q-mb-sm">
+                <img
+                  style="object-fit: cover"
+                  :src="blogger?.avatar ? baseUrl + blogger.avatar : ''"
+                  :alt="blogger?.displayName"
+                />
+              </q-avatar>
+              <div class="text-weight-bold">{{ blogger?.displayName }}</div>
+              <div v-if="blogger?.email">
+                <a class="text-white" :href="'mailto:' + blogger?.email">{{
+                  blogger?.email
+                }}</a>
+              </div>
+              <div v-if="blogger?.description" class="description text-caption">
+                {{ blogger?.description }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </q-img>
+    </q-drawer>
+
+    <q-footer class="text-white" :class="{ 'bg-dark': $q.dark.isActive }">
+      <div class="footer-div">
+        © {{ new Date().getFullYear() }}
+        <span class="text-bold" v-if="blogInfo"
+          >{{ blogInfo.title }} | {{ blogInfo.subtitle }}</span
+        >
+        <span class="powered-by-span">
+          Powered by
+          <a
+            class="text-white text-bold text-italic"
+            href="https://github.com/LuodachuiXG/Nola"
+            target="_blank"
+          >
+            Nola
+          </a>
+        </span>
+      </div>
+    </q-footer>
+    <q-page-container>
+      <router-view />
+    </q-page-container>
+  </q-layout>
+</template>
 
 <style scoped>
 .blogger-div {
   backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   width: 100%;
   height: 100%;
+
   .description {
     overflow: hidden;
     white-space: nowrap;
@@ -228,5 +279,17 @@ const toggleDarkMode = () => {
   }
 }
 
+a {
+  text-decoration: none;
+}
 
+.footer-div {
+  padding: 5px 20px;
+  position: relative;
+}
+
+.powered-by-span {
+  position: absolute;
+  right: 20px;
+}
 </style>

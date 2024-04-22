@@ -33,6 +33,10 @@ const routes: RouteRecordRaw[] = [
           displayName: '友情链接',
         },
       },
+      {
+        path: 'post',
+        component: () => import('pages/PostPage.vue')
+      },
     ],
   },
 

@@ -1,28 +1,30 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { StoreEnum } from 'src/models/enum/StoreEnum';
 import { getBlogInfo } from 'src/apis/configApi';
 import { errorMsg, notifyC } from 'src/utils/QuasarUtils';
 import { BlogInfo } from 'src/models/BlogInfo';
-import { updateFavicon } from 'src/utils/Utils';
+import { getActualUrl, updateFavicon } from 'src/utils/Utils';
 import { getBlogger } from 'src/apis/bloggerApi';
 import { Blogger } from 'src/models/Blogger';
 import { getMenus } from 'src/apis/menuApi';
 import { Menu } from 'src/models/Menu';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useBlogInfoStore } from 'stores/example-store';
+import {
+  MenuTargetEnum,
+  MenuTargetValueEnum,
+} from 'src/models/enum/MenuTargetEnum';
 
 const $q = useQuasar();
 const blogInfoStore = useBlogInfoStore();
 
 const router = useRouter();
-
-// 请求基地址
-const baseUrl = import.meta.env.VITE_BASE_URL;
+const route = useRoute();
 
 // 左侧抽屉是否展示
-const leftDrawerOpen = ref(true);
+const leftDrawerOpen = ref(false);
 
 // 博客信息
 const blogInfo = ref<BlogInfo | null>(null);
@@ -34,7 +36,19 @@ const menus = ref<Array<Menu>>([]);
 // 当前选择的菜单项
 const currentMenuIndex = ref(-1);
 
+// 加载完成的个数
+const loadedCount = ref(0);
+
 onMounted(() => {
+  $q.loading.show();
+  const isLoaded = watch(() => loadedCount.value, () => {
+    console.log(loadedCount.value);
+    if (loadedCount.value >= 3) {
+      $q.loading.hide();
+      // 结束监听
+      isLoaded();
+    }
+  })
   // 读取设置
   loadSetting();
   // 初始化博客信息
@@ -64,9 +78,11 @@ const initBlogInfo = () => {
       if (blogInfo.value.logo) {
         updateFavicon(blogInfo.value.logo);
       }
+      loadedCount.value++;
     })
     .catch((err) => {
       errorMsg(err);
+      $q.loading.hide();
     });
 };
 
@@ -77,9 +93,11 @@ const initBlogger = () => {
   getBlogger()
     .then((res) => {
       blogger.value = res.data;
+      loadedCount.value++;
     })
     .catch((err) => {
       errorMsg(err);
+      $q.loading.hide();
     });
 };
 
@@ -90,8 +108,22 @@ const initMenus = () => {
   getMenus()
     .then((res) => {
       menus.value = res.data;
+
+      // 判断当前是否直接使用链接跳转到了某个页面
+      const path = route.path.replaceAll('/', '');
+      menus.value.forEach((menu, index) => {
+        if (menu.href?.replaceAll('/', '') === path) {
+          // 设置当前菜单为选中菜单
+          currentMenuIndex.value = index;
+          return;
+        }
+      });
+      loadedCount.value++;
     })
-    .catch((err) => errorMsg(err));
+    .catch((err) => {
+      errorMsg(err);
+      $q.loading.hide();
+    });
 };
 
 /**
@@ -131,9 +163,9 @@ const toggleDarkMode = () => {
   if ($q.dark.mode === true) {
     $q.dark.set('auto');
     if ($q.dark.isActive) {
-      notifyC('根据系统', 'dark');
+      notifyC('跟随系统', 'dark');
     } else {
-      notifyC('根据系统', 'primary');
+      notifyC('跟随系统', 'primary');
     }
     localStorage.setItem(StoreEnum.DARK_MODE, 'auto');
     return;
@@ -150,11 +182,25 @@ const toggleDarkMode = () => {
  */
 const onMenuItemClick = (index: number, menu: Menu) => {
   currentMenuIndex.value = index;
-  if (menu.href) {
+
+  if (!menu.href) return;
+
+  if (menu.target !== MenuTargetEnum.SELF || menu.href.includes('http')) {
+    // 在新的页面打开网页，并设置打开方式
+    window.open(menu.href, MenuTargetValueEnum[menu.target]);
+  } else {
+    // 在当前页打开
     router.push({
       path: menu.href,
     });
   }
+};
+
+/**
+ * 网站标题点击事件
+ */
+const onTitleClick = () => {
+  router.push('/');
 };
 </script>
 
@@ -164,8 +210,8 @@ const onMenuItemClick = (index: number, menu: Menu) => {
       <q-toolbar>
         <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title>
-          {{ blogInfo?.title }} | {{ blogInfo?.subtitle }}
+        <q-toolbar-title @click="onTitleClick" class="pointer">
+          <span class="title">{{ blogInfo?.title }} | {{ blogInfo?.subtitle }}</span>
         </q-toolbar-title>
         <q-btn
           dense
@@ -207,7 +253,7 @@ const onMenuItemClick = (index: number, menu: Menu) => {
         class="absolute-top"
         :src="
           blogger?.avatar
-            ? baseUrl + blogger.avatar
+            ? getActualUrl(blogger.avatar)
             : 'https://cdn.quasar.dev/img/material.png'
         "
         style="height: 160px"
@@ -221,7 +267,7 @@ const onMenuItemClick = (index: number, menu: Menu) => {
               <q-avatar size="56px" class="q-mb-sm">
                 <img
                   style="object-fit: cover"
-                  :src="blogger?.avatar ? baseUrl + blogger.avatar : ''"
+                  :src="blogger?.avatar ? getActualUrl(blogger.avatar) : ''"
                   :alt="blogger?.displayName"
                 />
               </q-avatar>
@@ -265,6 +311,14 @@ const onMenuItemClick = (index: number, menu: Menu) => {
 </template>
 
 <style scoped>
+.title {
+  transition: all .3s ease-in-out;
+}
+
+.title:hover {
+  text-shadow: 0 0 6px #FFFFFF;
+}
+
 .blogger-div {
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);

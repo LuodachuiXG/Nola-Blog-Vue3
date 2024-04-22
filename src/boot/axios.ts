@@ -1,6 +1,6 @@
 import { boot } from 'quasar/wrappers';
 import axios, { AxiosInstance } from 'axios';
-import * as process from 'process';
+import { useRouter } from 'vue-router';
 
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
@@ -8,6 +8,8 @@ declare module '@vue/runtime-core' {
     $api: AxiosInstance;
   }
 }
+
+const router = useRouter();
 
 // Be careful when using SSR for cross-request state pollution
 // due to creating a Singleton instance here;

@@ -8,6 +8,7 @@ import {
 
 import routes from './routes';
 import { useBlogInfoStore } from 'stores/example-store';
+import { setDocumentTitle } from 'src/utils/Utils';
 
 /*
  * If not building with SSR mode, you can
@@ -39,16 +40,8 @@ export default route(function (/* { store, ssrContext } */) {
    * 导航守卫
    */
   router.beforeEach(async (to, from) => {
-    const blogInfo = useBlogInfoStore();
-    if (blogInfo.blogInfo) {
-      document.title =
-        to.meta.displayName?.toString() +
-        ' - ' +
-        blogInfo.blogInfo.title +
-        ' | ' +
-        blogInfo.blogInfo.subtitle;
-    } else {
-      document.title = to.meta.displayName?.toString() ?? '';
+    if (to.path !== '/post') {
+      setDocumentTitle(String(to.meta.displayName ?? ''));
     }
   });
 

@@ -27,6 +27,56 @@ export const getPosts = (
   }
   return api({
     url: baseUrl,
-    method: 'GET'
+    method: 'GET',
+  });
+};
+
+/**
+ * 获取文章内容（ID 和别名至少提供一个）
+ * @param id 文章 ID
+ * @param slug 文章别名
+ * @param password 密码（如果有）
+ */
+export const getPostContent = (
+  id?: number,
+  slug?: string,
+  password?: string
+) => {
+  let url = '/post/content';
+  if (id) {
+    url += `?postId=${id}`;
+  } else if (slug) {
+    url += `?slug=${slug}`;
+  } else {
+    return Promise.reject('文章 ID 或别名至少提供一个');
+  }
+  if (password) {
+    url += `&password=${password}`;
+  }
+  return api({
+    url: url,
+    method: 'GET',
+  });
+};
+
+/**
+ * 根据文章 ID 获取文章
+ * @param id 文章 ID
+ */
+export const getPostById = (id: number) => {
+  return api({
+    url: `/post/${id}`,
+    method: 'GET',
+  });
+};
+
+/**
+ * 根据文章别名获取文章
+ * @param slug 文章别名
+ */
+export const getPostBySlug = (slug: string) => {
+  return api({
+    url: `/post/slug/${slug}`,
+    method: 'GET',
   });
 };

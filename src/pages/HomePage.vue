@@ -4,8 +4,12 @@ import { Pager } from 'src/models/Pager';
 import { Post } from 'src/models/Post';
 import { errorMsg } from 'src/utils/QuasarUtils';
 import { onMounted, ref } from 'vue';
+import PostCard from 'components/PostCard.vue';
+import { Category } from 'src/models/Category';
+import { Tag } from 'src/models/Tag';
+import { useRouter } from 'vue-router';
 
-const baseUrl = import.meta.env.VITE_BASE_URL;
+const router = useRouter();
 
 // 总文章数
 const totalPost = ref(0);
@@ -35,47 +39,47 @@ const refreshPost = () => {
       totalPost.value = pager.totalData;
       totalPage.value = pager.totalPages;
       posts.value = pager.data;
-      console.log(posts.value);
     })
     .catch((err) => errorMsg(err));
 };
+
+/**
+ * 文章点击事件
+ * @param post 文章
+ */
+const onPostClick = (post: Post) => {
+  router.push({
+    path: 'post',
+    query: {
+      slug: post.slug,
+    },
+  });
+};
+
+/**
+ * 分类点击事件
+ * @param category 分类
+ */
+const onCategoryClick = (category: Category) => {};
+
+/**
+ * 标签点击事件
+ * @param tag 标签
+ */
+const onTagClick = (tag: Tag) => {};
 </script>
 <template>
   <div class="container">
     <div class="q-pa-md row items-start q-gutter-md">
-      <q-card
-        class="post-card"
-        flat
-        bordered
+      <post-card
         v-for="(post, index) in posts"
+        :post="post"
         :key="index"
-        style="width: 240px; height: 350px"
-      >
-        <q-img
-          class="pointer post-cover"
-          v-if="post.cover"
-          :src="baseUrl + post.cover"
-          style="height: 200px"
-          fit="cover"
-        />
-
-        <q-card-section>
-          <div class="text-h6 q-mb-xs pointer">{{ post.title }}</div>
-          <div class="text-caption text-grey">
-            {{ post.excerpt }}
-          </div>
-        </q-card-section>
-      </q-card>
+        @on-post-click="onPostClick"
+        @on-tag-click="onTagClick"
+        @on-category-click="onCategoryClick"
+      />
     </div>
   </div>
 </template>
-<style scoped>
-.post-card:hover .post-cover:deep(img) {
-  transform: scale(1.05) rotate(1deg);
-  filter: brightness(1.1);
-}
-
-.post-cover:deep(img) {
-  transition: all 0.6s ease;
-}
-</style>
+<style scoped></style>

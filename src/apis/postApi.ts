@@ -38,9 +38,9 @@ export const getPosts = (
  * @param password 密码（如果有）
  */
 export const getPostContent = (
-  id?: number,
-  slug?: string,
-  password?: string
+  id?: number | null,
+  slug?: string | null,
+  password?: string | null
 ) => {
   let url = '/post/content';
   if (id) {

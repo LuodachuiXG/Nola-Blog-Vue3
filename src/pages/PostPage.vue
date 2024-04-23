@@ -1,16 +1,24 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { Post } from 'src/models/Post';
-import { getPostById, getPostBySlug } from 'src/apis/postApi';
+import { getPostById, getPostBySlug, getPostContent } from 'src/apis/postApi';
 import { errorMsg } from 'src/utils/QuasarUtils';
-import { setDocumentTitle } from 'src/utils/Utils';
+import { getActualUrl, setDocumentTitle } from 'src/utils/Utils';
 import { useQuasar } from 'quasar';
+import { MdPreview, MdCatalog } from 'md-editor-v3';
+import { PostContent } from 'src/models/PostContent';
+import 'md-editor-v3/lib/style.css';
+import { StoreEnum } from 'src/models/enum/StoreEnum';
+import { MdPreviewThemeEnum } from 'src/models/enum/MdPreviewThemeEnum';
 
 const $q = useQuasar();
 
+const globalVars: GlobalVars = inject('globalVars')!!;
+
 const route = useRoute();
 const router = useRouter();
+
 // 文章 ID
 const postId = ref(-1);
 
@@ -19,7 +27,21 @@ const postSlug = ref('');
 
 // 文章
 const post = ref<Post | null>(null);
+
+// 文章内容
+const postContent = ref<PostContent | null>(null);
+
+const scrollElement = document.documentElement;
+
+// Markdown 预览器主题
+const mdPreviewTheme = ref<MdPreviewThemeEnum>(MdPreviewThemeEnum.Cyanosis);
+
+// 文章密码输入框数据
+const postPassword = ref('');
+
 onMounted(() => {
+  // 读取设置
+  loadSetting();
   $q.loading.show();
   const id = route.query.id;
   const slug = route.query.slug;
@@ -36,6 +58,20 @@ onMounted(() => {
 });
 
 /**
+ * 读取设置
+ */
+const loadSetting = () => {
+  let theme =
+    localStorage.getItem(StoreEnum.MD_THEME) ?? MdPreviewThemeEnum.Cyanosis;
+  if (
+    !Object.values(MdPreviewThemeEnum).includes(theme as MdPreviewThemeEnum)
+  ) {
+    theme = MdPreviewThemeEnum.Cyanosis;
+  }
+  mdPreviewTheme.value = theme as MdPreviewThemeEnum;
+};
+
+/**
  * 根据文章 ID 刷新文章
  * @param id 文章 ID
  */
@@ -44,7 +80,13 @@ const refreshPostById = (id: number) => {
     .then((res) => {
       post.value = res.data;
       setDocumentTitle(post.value?.title ?? '');
-      $q.loading.hide();
+      if (!post.value?.encrypted) {
+        // 文章没加密，获取文章内容
+        refreshPostContent(id);
+      } else {
+        // 文章加密
+        $q.loading.hide();
+      }
     })
     .catch((err) => {
       errorMsg(err);
@@ -64,7 +106,13 @@ const refreshPostBySlug = (slug: string) => {
     .then((res) => {
       post.value = res.data;
       setDocumentTitle(post.value?.title ?? '');
-      $q.loading.hide();
+      if (!post.value?.encrypted) {
+        // 文章没加密，获取文章内容
+        refreshPostContent(null, slug);
+      } else {
+        // 文章加密
+        $q.loading.hide();
+      }
     })
     .catch((err) => {
       errorMsg(err);
@@ -74,10 +122,171 @@ const refreshPostBySlug = (slug: string) => {
       }
     });
 };
+
+/**
+ * 获取文章内容（ID 和别名至少提供一个）
+ * @param id 文章 ID
+ * @param slug 文章别名
+ * @param password 密码（如果有）
+ */
+const refreshPostContent = (
+  id?: number | null,
+  slug?: string | null,
+  password?: string | null
+) => {
+  getPostContent(id, slug, password)
+    .then((res) => {
+      postContent.value = res.data;
+      $q.loading.hide();
+    })
+    .catch((err) => {
+      errorMsg(err);
+      $q.loading.hide();
+    });
+};
+
+/**
+ * 设置 Markdown 预览器主题
+ * @param theme
+ */
+const setTheme = (theme: string) => {
+  mdPreviewTheme.value = theme as MdPreviewThemeEnum;
+  localStorage.setItem(StoreEnum.MD_THEME, theme);
+};
+
+/**
+ * 确认文章密码按钮点击事件
+ */
+const onSubmitPasswordClick = () => {
+  if (postPassword.value.length === 0) {
+    errorMsg('请输入密码');
+    return;
+  }
+
+  refreshPostContent(post.value?.postId, null, postPassword.value);
+};
 </script>
 
 <template>
-  <div class="container"></div>
+  <div class="container">
+    <!-- 文章已加密 -->
+    <div class="post-encrypted-div" v-if="post?.encrypted && !postContent">
+      <q-card
+        style="text-align: center"
+        :flat="$q.dark.isActive"
+        :bordered="$q.dark.isActive"
+        @keydown.enter="onSubmitPasswordClick"
+      >
+        <q-card-section>
+          <div class="text-h6">{{ post.title }}</div>
+          <div>文章已加密，请输入密码</div>
+          <div style="width: 250px; margin: 20px auto">
+            <q-input outlined v-model="postPassword" label="文章密码" />
+            <q-btn
+              style="margin-top: 20px; width: 100%"
+              :color="$q.dark.isActive ? 'dark' : 'primary'"
+              label="确定"
+              @click="onSubmitPasswordClick"
+            />
+          </div>
+        </q-card-section>
+      </q-card>
+    </div>
+
+    <!-- 文章内容展示 -->
+    <div
+      class="md-preview-div"
+      v-if="postContent"
+      :class="{ 'big-padding': !globalVars.isSmallWindow }"
+    >
+      <q-card
+        class="my-card"
+        :flat="$q.dark.isActive"
+        :bordered="$q.dark.isActive"
+      >
+        <q-img
+          :src="
+            getActualUrl(
+              postContent.post.cover
+                ? postContent.post.cover
+                : postContent.post.category?.cover
+                ? postContent.post.category.cover
+                : ''
+            )
+          "
+          height="30vh"
+        >
+          <div class="absolute-bottom text-h6">
+            {{ postContent.post.title }}
+          </div>
+        </q-img>
+
+        <q-card-section>
+          <div class="switch-theme-div">
+            <q-btn-dropdown
+              class="switch-theme-btn"
+              :color="$q.dark.isActive ? 'dark' : 'primary'"
+              :label="`切换主题 (${mdPreviewTheme})`"
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  v-close-popup
+                  v-for="(theme, index) in Object.values(MdPreviewThemeEnum)"
+                  :key="index"
+                  @click="setTheme(theme)"
+                >
+                  <q-item-section>
+                    <q-item-label>{{ theme }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
+          </div>
+          <MdPreview
+            class="md-preview"
+            editorId="post-preview"
+            :modelValue="postContent.content"
+            :previewTheme="mdPreviewTheme"
+            :theme="$q.dark.isActive ? 'dark' : 'light'"
+          />
+        </q-card-section>
+      </q-card>
+      <q-card class="catalog-card" v-if="!globalVars.isSmallWindow">
+        <!--        <MdCatalog editorId="post-preview" :scrollElement="scrollElement" />-->
+      </q-card>
+    </div>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.container {
+  padding: 10px;
+}
+
+.post-encrypted-div {
+}
+
+.md-preview-div {
+  position: relative;
+}
+
+.big-padding {
+  padding: 20px 10vw 20px 10vw;
+}
+
+.switch-theme-div {
+  position: relative;
+  height: 36px;
+  margin-bottom: 10px;
+
+  .switch-theme-btn {
+    position: absolute;
+    right: 0;
+  }
+}
+
+.catalog-card {
+  display: inline-block;
+}
+</style>

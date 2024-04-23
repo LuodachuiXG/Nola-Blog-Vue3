@@ -2,11 +2,14 @@
 import { Post } from 'src/models/Post';
 import { Tag } from 'src/models/Tag';
 import { Category } from 'src/models/Category';
-import { getActualUrl } from 'src/utils/Utils';
+import { formatTime, getActualUrl } from 'src/utils/Utils';
+import { inject } from 'vue';
 
 interface Props {
   post: Post;
 }
+
+const globalVars: GlobalVars = inject('globalVars')!!;
 
 const props = defineProps<Props>();
 
@@ -45,7 +48,8 @@ const onTagClick = (tag: Tag) => {
     class="post-card"
     :flat="$q.dark.isActive"
     :bordered="$q.dark.isActive"
-    style="width: 240px; height: 350px"
+    style="height: 350px"
+    :style="{ width: globalVars.isSmallWindow ? '100%' : '240px' }"
   >
     <q-img
       @click="onPostClick"
@@ -63,6 +67,11 @@ const onTagClick = (tag: Tag) => {
     />
 
     <q-card-section>
+      <div class="post-info-div">
+        <div class="post-create-time text-grey text-caption">
+          {{ formatTime(post.createTime)}}
+        </div>
+      </div>
       <div class="text-h6 q-mb-xs pointer" @click="onPostClick">
         <q-icon
           name="keyboard_double_arrow_up"
@@ -135,5 +144,9 @@ const onTagClick = (tag: Tag) => {
   height: 40px;
   max-width: 1000px;
   margin-left: -5px;
+}
+
+.post-info-div {
+  text-align: left;
 }
 </style>

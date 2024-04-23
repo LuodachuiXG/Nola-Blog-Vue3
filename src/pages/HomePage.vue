@@ -3,7 +3,7 @@ import { getPosts } from 'src/apis/postApi';
 import { Pager } from 'src/models/Pager';
 import { Post } from 'src/models/Post';
 import { errorMsg } from 'src/utils/QuasarUtils';
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import PostCard from 'components/PostCard.vue';
 import { Category } from 'src/models/Category';
 import { Tag } from 'src/models/Tag';

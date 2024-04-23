@@ -68,6 +68,8 @@ module.exports = {
 
   // add your custom rules here
   rules: {
+    '@typescript-eslint/no-extra-non-null-assertion': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
 
     'prefer-promise-reject-errors': 'off',
 

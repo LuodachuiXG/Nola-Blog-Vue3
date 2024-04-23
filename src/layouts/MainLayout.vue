@@ -41,14 +41,16 @@ const loadedCount = ref(0);
 
 onMounted(() => {
   $q.loading.show();
-  const isLoaded = watch(() => loadedCount.value, () => {
-    console.log(loadedCount.value);
-    if (loadedCount.value >= 3) {
-      $q.loading.hide();
-      // 结束监听
-      isLoaded();
+  const isLoaded = watch(
+    () => loadedCount.value,
+    () => {
+      if (loadedCount.value >= 3) {
+        $q.loading.hide();
+        // 结束监听
+        isLoaded();
+      }
     }
-  })
+  );
   // 读取设置
   loadSetting();
   // 初始化博客信息
@@ -210,8 +212,10 @@ const onTitleClick = () => {
       <q-toolbar>
         <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title @click="onTitleClick" class="pointer">
-          <span class="title">{{ blogInfo?.title }} | {{ blogInfo?.subtitle }}</span>
+        <q-toolbar-title>
+          <span class="title pointer" @click="onTitleClick"
+            >{{ blogInfo?.title }} | {{ blogInfo?.subtitle }}</span
+          >
         </q-toolbar-title>
         <q-btn
           dense
@@ -229,7 +233,7 @@ const onTitleClick = () => {
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" side="left" bordered>
+    <q-drawer v-model="leftDrawerOpen" side="left" bordered :overlay="route.path.includes('post')">
       <q-scroll-area style="height: calc(100% - 160px); margin-top: 160px">
         <q-list padding>
           <q-item
@@ -312,11 +316,11 @@ const onTitleClick = () => {
 
 <style scoped>
 .title {
-  transition: all .3s ease-in-out;
+  transition: all 0.3s ease-in-out;
 }
 
 .title:hover {
-  text-shadow: 0 0 6px #FFFFFF;
+  text-shadow: 0 0 6px #ffffff;
 }
 
 .blogger-div {

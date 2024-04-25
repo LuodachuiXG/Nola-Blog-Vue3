@@ -95,6 +95,9 @@ module.exports = configure(function(ctx) {
       config: {
         loading: {
           message: 'Loading...'
+        },
+        loadingBar: {
+          color: 'positive'
         }
       },
 
@@ -111,7 +114,8 @@ module.exports = configure(function(ctx) {
       // Quasar plugins
       plugins: [
         'Notify',
-        'Loading'
+        'Loading',
+        'LoadingBar'
       ]
     },
 

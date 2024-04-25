@@ -39,6 +39,7 @@ const onCategoryClick = (category: Category) => {
  * @param tag 标签
  */
 const onTagClick = (tag: Tag) => {
+  console.log(1);
   emit('onTagClick', tag);
 };
 </script>
@@ -94,8 +95,9 @@ const onTagClick = (tag: Tag) => {
         <div class="row no-wrap">
           <q-chip
             square
-            class="pointer"
+            class="pointer non-selectable"
             v-if="post.category"
+            clickable
             @click="onCategoryClick(post.category)"
           >
             <q-avatar icon="book" color="primary" text-color="white" />
@@ -104,13 +106,14 @@ const onTagClick = (tag: Tag) => {
             }}</span>
           </q-chip>
           <q-chip
-            class="pointer"
+            class="pointer non-selectable"
             square
             color="primary"
             text-color="white"
             icon="bookmark"
             v-for="(tag, index) in post.tags"
             :key="index"
+            clickable
             @click="onTagClick(tag)"
           >
             {{ tag.displayName }}

@@ -271,7 +271,7 @@ const onTitleClick = () => {
               <q-avatar size="56px" class="q-mb-sm">
                 <img
                   style="object-fit: cover"
-                  :src="blogger?.avatar ? getActualUrl(blogger.avatar) : ''"
+                  :src="blogger?.avatar ? getActualUrl(blogger.avatar) : '/favicon.ico'"
                   :alt="blogger?.displayName"
                 />
               </q-avatar>

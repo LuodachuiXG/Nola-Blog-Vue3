@@ -6,7 +6,7 @@ import { getPostById, getPostBySlug, getPostContent } from 'src/apis/postApi';
 import { errorMsg } from 'src/utils/QuasarUtils';
 import { getActualUrl, setDocumentTitle } from 'src/utils/Utils';
 import { useQuasar } from 'quasar';
-import { MdPreview, MdCatalog } from 'md-editor-v3';
+import { MdPreview } from 'md-editor-v3';
 import { PostContent } from 'src/models/PostContent';
 import 'md-editor-v3/lib/style.css';
 import { StoreEnum } from 'src/models/enum/StoreEnum';
@@ -31,7 +31,7 @@ const post = ref<Post | null>(null);
 // 文章内容
 const postContent = ref<PostContent | null>(null);
 
-const scrollElement = document.documentElement;
+// const scrollElement = document.documentElement;
 
 // Markdown 预览器主题
 const mdPreviewTheme = ref<MdPreviewThemeEnum>(MdPreviewThemeEnum.Cyanosis);
@@ -44,7 +44,7 @@ onMounted(() => {
   loadSetting();
   $q.loading.show();
   const id = route.query.id;
-  const slug = route.query.slug;
+  const slug = route.query.s;
   if (id && !isNaN(Number(id))) {
     postId.value = Number(id);
     refreshPostById(postId.value);
@@ -181,7 +181,12 @@ const onSubmitPasswordClick = () => {
           <div class="text-h6">{{ post.title }}</div>
           <div>文章已加密，请输入密码</div>
           <div style="width: 250px; margin: 20px auto">
-            <q-input outlined v-model="postPassword" label="文章密码" />
+            <q-input
+              outlined
+              v-model="postPassword"
+              label="文章密码"
+              type="password"
+            />
             <q-btn
               style="margin-top: 20px; width: 100%"
               :color="$q.dark.isActive ? 'dark' : 'primary'"
@@ -205,6 +210,7 @@ const onSubmitPasswordClick = () => {
         :bordered="$q.dark.isActive"
       >
         <q-img
+          v-if="postContent.post.cover || postContent.post.category?.cover"
           :src="
             getActualUrl(
               postContent.post.cover
@@ -220,6 +226,11 @@ const onSubmitPasswordClick = () => {
             {{ postContent.post.title }}
           </div>
         </q-img>
+
+        <!-- 没有封面图 -->
+        <q-card-section v-else class="title-div text-center text-h5">
+          {{ postContent.post.title }}
+        </q-card-section>
 
         <q-card-section>
           <div class="switch-theme-div">
@@ -288,5 +299,9 @@ const onSubmitPasswordClick = () => {
 
 .catalog-card {
   display: inline-block;
+}
+
+.title-div{
+  padding: 40px 0 10px 0;
 }
 </style>

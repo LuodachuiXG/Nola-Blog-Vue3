@@ -77,3 +77,11 @@ export const formatTime = (time: number) => {
     (minute < 10 ? '0' + minute : minute)
   );
 };
+
+/**
+ * 判断一段文本是否是数字
+ * @param str 文本
+ */
+export const isNumber = (str: string): boolean => {
+  return !isNaN(Number(str));
+};

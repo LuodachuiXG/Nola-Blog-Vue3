@@ -263,13 +263,21 @@ const onSubmitPasswordClick = () => {
           />
         </q-card-section>
       </q-card>
+
       <div class="catalog-div" v-if="!globalVars.isSmallWindow">
-        <q-card class="catalog-card">
-          <MdCatalog
-            editorId="post-preview"
-            :scrollElement="scrollElement"
-            :theme="$q.dark.isActive ? 'dark' : 'light'"
-          />
+        <q-card
+          class="catalog-card"
+          :flat="$q.dark.isActive"
+          :bordered="$q.dark.isActive"
+        >
+          <q-card-section>
+            <q-scroll-area style="height: 60vh; max-width: 100%">
+              <MdCatalog
+                editor-id="post-preview"
+                :scroll-element="scrollElement"
+              />
+            </q-scroll-area>
+          </q-card-section>
         </q-card>
       </div>
     </div>
@@ -277,35 +285,32 @@ const onSubmitPasswordClick = () => {
 </template>
 
 <style scoped>
-.container {
-  padding: 10px;
+.md-preview {
+  max-width: 90vw;
 }
 
 .md-div {
-  position: relative;
   display: flex;
-}
 
-.post-card {
-  flex-grow: 5;
-}
+  .post-card {
+    flex-grow: 1;
+    width: 75%;
+  }
 
-.catalog-div {
-  flex-grow: 1;
-  width: 33vw;
+  .catalog-div {
+    width: 20vw;
+    flex-grow: 1;
+    margin-left: 10px;
+  }
 
-  margin-left: 10px;
   .catalog-card {
-    padding: 10px;
-    width: 16vw;
+    width: 20.5vw;
     position: fixed;
   }
 }
 
-
-
 .big-padding {
-  padding: 20px 10vw 20px 10vw;
+  padding: 40px;
 }
 
 .switch-theme-div {
@@ -321,6 +326,7 @@ const onSubmitPasswordClick = () => {
 
 .catalog-card {
   display: inline-block;
+  align-self: start;
 }
 
 .title-div {

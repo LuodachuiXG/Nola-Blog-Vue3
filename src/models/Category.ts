@@ -13,5 +13,5 @@ export interface Category {
   /** 是否统一封面（未设置封面的文章） */
   unifiedCover: boolean;
   /** 文章数量 */
-  pageCount: number;
+  postCount: number;
 }

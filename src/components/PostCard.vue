@@ -70,7 +70,7 @@ const onTagClick = (tag: Tag) => {
     <q-card-section>
       <div class="post-info-div">
         <div class="post-create-time text-grey text-caption">
-          {{ formatTime(post.createTime)}}
+          {{ formatTime(post.createTime) }}
         </div>
       </div>
       <div class="text-h6 q-mb-xs pointer" @click="onPostClick">
@@ -101,7 +101,7 @@ const onTagClick = (tag: Tag) => {
             @click="onCategoryClick(post.category)"
           >
             <q-avatar icon="book" color="primary" text-color="white" />
-            <span style="margin-left: 5px">{{
+            <span class="q-ml-xs text-bold">{{
               post.category.displayName
             }}</span>
           </q-chip>
@@ -116,7 +116,7 @@ const onTagClick = (tag: Tag) => {
             clickable
             @click="onTagClick(tag)"
           >
-            {{ tag.displayName }}
+            <span class="text-bold">{{ tag.displayName }}</span>
           </q-chip>
         </div>
       </q-scroll-area>

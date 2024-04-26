@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { inject, onMounted, ref } from 'vue';
+import { inject, onMounted, ref, watch } from 'vue';
 import { Post } from 'src/models/Post';
 import { getPostById, getPostBySlug, getPostContent } from 'src/apis/postApi';
 import { errorMsg } from 'src/utils/QuasarUtils';
@@ -11,6 +11,14 @@ import { PostContent } from 'src/models/PostContent';
 import 'md-editor-v3/lib/style.css';
 import { StoreEnum } from 'src/models/enum/StoreEnum';
 import { MdPreviewThemeEnum } from 'src/models/enum/MdPreviewThemeEnum';
+
+/**
+ * 文章 Head 列表（目录，标题）接口
+ */
+interface HeadList {
+  level: number;
+  text: string;
+}
 
 const $q = useQuasar();
 
@@ -39,6 +47,9 @@ const mdPreviewTheme = ref<MdPreviewThemeEnum>(MdPreviewThemeEnum.Cyanosis);
 // 文章密码输入框数据
 const postPassword = ref('');
 
+// 文章目录
+const postHeadList = ref<Array<HeadList>>([]);
+
 onMounted(() => {
   // 读取设置
   loadSetting();
@@ -55,6 +66,17 @@ onMounted(() => {
     // 跳回主页
     router.push({ path: '/' });
   }
+
+  watch(
+    () => post.value,
+    (value) => {
+      if (value) {
+        // 设置窗口标题
+        setDocumentTitle(value.title);
+      }
+    },
+    { immediate: true }
+  );
 });
 
 /**
@@ -165,6 +187,14 @@ const onSubmitPasswordClick = () => {
 
   refreshPostContent(post.value?.postId, null, postPassword.value);
 };
+
+/**
+ * Markdown 预览器获取文章目录回调
+ * @param list
+ */
+const onMdPreviewGetCatalog = (list: Array<HeadList>) => {
+  postHeadList.value = list;
+};
 </script>
 
 <template>
@@ -260,11 +290,15 @@ const onSubmitPasswordClick = () => {
             :modelValue="postContent.content"
             :previewTheme="mdPreviewTheme"
             :theme="$q.dark.isActive ? 'dark' : 'light'"
+            @on-get-catalog="onMdPreviewGetCatalog"
           />
         </q-card-section>
       </q-card>
 
-      <div class="catalog-div" v-if="!globalVars.isSmallWindow">
+      <div
+        class="catalog-div"
+        v-if="!globalVars.isSmallWindow && postHeadList.length > 0"
+      >
         <q-card
           class="catalog-card"
           :flat="$q.dark.isActive"
@@ -285,6 +319,10 @@ const onSubmitPasswordClick = () => {
 </template>
 
 <style scoped>
+.post-encrypted-div {
+  margin: 40px;
+}
+
 .md-preview {
   max-width: 90vw;
 }

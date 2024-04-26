@@ -36,6 +36,7 @@ const tag = ref<string | undefined>(undefined);
 // 分类名或别名检索
 const category = ref<string | undefined>(undefined);
 
+
 // 文章列表
 const posts = ref<Array<Post>>([]);
 
@@ -77,6 +78,7 @@ const initUrlParam = () => {
  */
 const refreshPost = () => {
   $q.loadingBar.start();
+  $q.loading.show();
   getPosts(
     currentPage.value,
     pageSize.value,
@@ -94,10 +96,12 @@ const refreshPost = () => {
       totalPage.value = pager.totalPages;
       posts.value = pager.data;
       $q.loadingBar.stop();
+      $q.loading.hide();
     })
     .catch((err) => {
       errorMsg(err);
       $q.loadingBar.stop();
+      $q.loading.hide();
     });
 };
 
@@ -172,7 +176,7 @@ const onPageChange = (value: number) => {
         icon="key"
         @remove="onSearchClear"
       >
-        {{ key }}
+        <span class="text-bold q-mr-xs">{{ key }}</span>
       </q-chip>
       <q-chip
         v-if="tagId"
@@ -183,12 +187,12 @@ const onPageChange = (value: number) => {
         icon="bookmark"
         @remove="onSearchClear"
       >
-        ID: {{ tagId }}
+        <span class="text-bold q-mr-xs">ID: {{ tagId }}</span>
       </q-chip>
 
       <q-chip v-if="categoryId" square removable @remove="onSearchClear">
         <q-avatar icon="book" color="primary" text-color="white" />
-        <span style="margin-left: 5px"> ID: {{ categoryId }} </span>
+        <span class="text-bold q-ml-xs q-mr-xs"> ID: {{ categoryId }} </span>
       </q-chip>
       <q-chip
         v-if="tag"
@@ -199,38 +203,49 @@ const onPageChange = (value: number) => {
         icon="bookmark"
         @remove="onSearchClear"
       >
-        {{ tag }}
+        <span class="text-bold q-ml-xs q-mr-xs">
+          {{ tag }}
+        </span>
       </q-chip>
 
       <q-chip v-if="category" square removable @remove="onSearchClear">
         <q-avatar icon="book" color="primary" text-color="white" />
-        <span style="margin-left: 5px"> {{ category }} </span>
+        <span class="text-bold q-ml-xs q-mr-xs">
+          {{ category }}
+        </span>
       </q-chip>
     </div>
-    <div class="q-pa-md row items-start q-gutter-md">
-      <post-card
-        v-for="(post, index) in posts"
-        :post="post"
-        :key="index"
-        @on-post-click="onPostClick"
-        @on-tag-click="onTagClick"
-        @on-category-click="onCategoryClick"
-      />
-    </div>
-    <div class="pagination-div">
-      <q-pagination
-        v-model="currentPage"
-        :max="totalPage"
-        direction-links
-        flat
-        color="grey"
-        active-color="primary"
-        @update:model-value="onPageChange"
-      />
-    </div>
+    <q-scroll-area style="height: 100%; width: 100%">
+      <div class="q-pa-md row items-start q-gutter-md">
+        <post-card
+          v-for="(post, index) in posts"
+          :post="post"
+          :key="index"
+          @on-post-click="onPostClick"
+          @on-tag-click="onTagClick"
+          @on-category-click="onCategoryClick"
+        />
+      </div>
+
+      <div class="pagination-div">
+        <q-pagination
+          v-model="currentPage"
+          :max="totalPage"
+          direction-links
+          flat
+          color="grey"
+          active-color="primary"
+          @update:model-value="onPageChange"
+        />
+      </div>
+    </q-scroll-area>
   </div>
 </template>
 <style scoped>
+.container {
+  height: 86vh;
+}
+
 .search-div {
   padding-bottom: 0;
 }

@@ -41,6 +41,7 @@ const loadedCount = ref(0);
 
 onMounted(() => {
   $q.loading.show();
+  // 判断是否已经加载完成
   const isLoaded = watch(
     () => loadedCount.value,
     () => {
@@ -51,6 +52,16 @@ onMounted(() => {
       }
     }
   );
+
+  // 监听路由变化，来动态修改当前选中的菜单项
+  watch(
+    () => route.path,
+    (path) => {
+      setCurrentSelectedMenuByPath(path);
+    }
+  );
+
+  //
   // 读取设置
   loadSetting();
   // 初始化博客信息
@@ -112,20 +123,30 @@ const initMenus = () => {
       menus.value = res.data;
 
       // 判断当前是否直接使用链接跳转到了某个页面
-      const path = route.path.replaceAll('/', '');
-      menus.value.forEach((menu, index) => {
-        if (menu.href?.replaceAll('/', '') === path) {
-          // 设置当前菜单为选中菜单
-          currentMenuIndex.value = index;
-          return;
-        }
-      });
+      setCurrentSelectedMenuByPath(route.path);
       loadedCount.value++;
     })
     .catch((err) => {
       errorMsg(err);
       $q.loading.hide();
     });
+};
+
+/**
+ * 根据路径地址设置当前选中菜单
+ * @param path
+ */
+const setCurrentSelectedMenuByPath = (path: string) => {
+  let menuIndex = -1;
+  const p = path.replaceAll('/', '');
+  menus.value.forEach((menu, index) => {
+    if (menu.href?.replaceAll('/', '') === p) {
+      menuIndex = index;
+      return;
+    }
+  });
+  // 设置当前菜单为选中菜单
+  currentMenuIndex.value = menuIndex;
 };
 
 /**
@@ -233,7 +254,13 @@ const onTitleClick = () => {
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" side="left" bordered :overlay="route.path.includes('post')">
+    <q-drawer
+      v-model="leftDrawerOpen"
+      style="position: fixed;"
+      side="left"
+      bordered
+      :overlay="route.path.includes('post')"
+    >
       <q-scroll-area style="height: calc(100% - 160px); margin-top: 160px">
         <q-list padding>
           <q-item
@@ -271,7 +298,11 @@ const onTitleClick = () => {
               <q-avatar size="56px" class="q-mb-sm">
                 <img
                   style="object-fit: cover"
-                  :src="blogger?.avatar ? getActualUrl(blogger.avatar) : '/favicon.ico'"
+                  :src="
+                    blogger?.avatar
+                      ? getActualUrl(blogger.avatar)
+                      : '/favicon.ico'
+                  "
                   :alt="blogger?.displayName"
                 />
               </q-avatar>
@@ -309,7 +340,7 @@ const onTitleClick = () => {
       </div>
     </q-footer>
     <q-page-container>
-      <router-view />
+      <router-view/>
     </q-page-container>
   </q-layout>
 </template>

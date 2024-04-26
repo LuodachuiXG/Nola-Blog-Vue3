@@ -6,7 +6,7 @@ import { getPostById, getPostBySlug, getPostContent } from 'src/apis/postApi';
 import { errorMsg } from 'src/utils/QuasarUtils';
 import { getActualUrl, setDocumentTitle } from 'src/utils/Utils';
 import { useQuasar } from 'quasar';
-import { MdPreview } from 'md-editor-v3';
+import { MdPreview, MdCatalog } from 'md-editor-v3';
 import { PostContent } from 'src/models/PostContent';
 import 'md-editor-v3/lib/style.css';
 import { StoreEnum } from 'src/models/enum/StoreEnum';
@@ -31,7 +31,7 @@ const post = ref<Post | null>(null);
 // 文章内容
 const postContent = ref<PostContent | null>(null);
 
-// const scrollElement = document.documentElement;
+const scrollElement = document.documentElement;
 
 // Markdown 预览器主题
 const mdPreviewTheme = ref<MdPreviewThemeEnum>(MdPreviewThemeEnum.Cyanosis);
@@ -200,12 +200,12 @@ const onSubmitPasswordClick = () => {
 
     <!-- 文章内容展示 -->
     <div
-      class="md-preview-div"
+      class="md-div"
       v-if="postContent"
       :class="{ 'big-padding': !globalVars.isSmallWindow }"
     >
       <q-card
-        class="my-card"
+        class="post-card"
         :flat="$q.dark.isActive"
         :bordered="$q.dark.isActive"
       >
@@ -263,9 +263,15 @@ const onSubmitPasswordClick = () => {
           />
         </q-card-section>
       </q-card>
-      <q-card class="catalog-card" v-if="!globalVars.isSmallWindow">
-        <!--        <MdCatalog editorId="post-preview" :scrollElement="scrollElement" />-->
-      </q-card>
+      <div class="catalog-div" v-if="!globalVars.isSmallWindow">
+        <q-card class="catalog-card">
+          <MdCatalog
+            editorId="post-preview"
+            :scrollElement="scrollElement"
+            :theme="$q.dark.isActive ? 'dark' : 'light'"
+          />
+        </q-card>
+      </div>
     </div>
   </div>
 </template>
@@ -275,12 +281,28 @@ const onSubmitPasswordClick = () => {
   padding: 10px;
 }
 
-.post-encrypted-div {
+.md-div {
+  position: relative;
+  display: flex;
 }
 
-.md-preview-div {
-  position: relative;
+.post-card {
+  flex-grow: 5;
 }
+
+.catalog-div {
+  flex-grow: 1;
+  width: 33vw;
+
+  margin-left: 10px;
+  .catalog-card {
+    padding: 10px;
+    width: 16vw;
+    position: fixed;
+  }
+}
+
+
 
 .big-padding {
   padding: 20px 10vw 20px 10vw;
@@ -301,7 +323,7 @@ const onSubmitPasswordClick = () => {
   display: inline-block;
 }
 
-.title-div{
+.title-div {
   padding: 40px 0 10px 0;
 }
 </style>

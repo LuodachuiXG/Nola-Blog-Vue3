@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { Tag } from 'src/models/Tag';
-import { getCategory } from 'src/apis/categoryApi';
 import { errorMsg } from 'src/utils/QuasarUtils';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
-import { getTag } from 'src/apis/tagApi';
-import PostCard from 'components/PostCard.vue';
+import {  getTags } from 'src/apis/tagApi';
 
 const $q = useQuasar();
 
@@ -34,7 +32,7 @@ onMounted(() => {
 const refreshTag = () => {
   $q.loadingBar.start();
   $q.loading.show();
-  getTag(currentPage.value, pageSize.value)
+  getTags(currentPage.value, pageSize.value)
     .then((res) => {
       currentPage.value = res.data.page;
       pageSize.value = res.data.size;

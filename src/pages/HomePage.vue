@@ -203,7 +203,7 @@ const onPageChange = (value: number) => {
         icon="bookmark"
         @remove="onSearchClear"
       >
-        <span class="text-bold q-ml-xs q-mr-xs">
+        <span class="text-bold q-mr-xs">
           {{ tag }}
         </span>
       </q-chip>

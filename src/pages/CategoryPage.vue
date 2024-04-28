@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { Category } from 'src/models/Category';
-import { getCategory } from 'src/apis/categoryApi';
+import { getCategories } from 'src/apis/categoryApi';
 import { errorMsg } from 'src/utils/QuasarUtils';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
@@ -32,7 +32,7 @@ onMounted(() => {
 const refreshCategory = () => {
   $q.loadingBar.start();
   $q.loading.show();
-  getCategory(currentPage.value, pageSize.value)
+  getCategories(currentPage.value, pageSize.value)
     .then((res) => {
       currentPage.value = res.data.page;
       pageSize.value = res.data.size;

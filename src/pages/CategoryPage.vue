@@ -39,6 +39,7 @@ const refreshCategory = () => {
       totalCategory.value = res.data.totalData;
       totalPage.value = res.data.totalPages;
       categories.value = res.data.data;
+      console.log(categories.value);
       $q.loadingBar.stop();
       $q.loading.hide();
     })
@@ -74,7 +75,10 @@ const onCategoryClick = (category: Category) => {
 
 <template>
   <div class="container">
-    <q-scroll-area style="height: 100%; width: 100%">
+    <div class="q-pa-md" v-if="categories.length === 0 && !$q.loading.isActive">
+      <q-banner rounded class="bg-orange text-white"> 暂无分类 </q-banner>
+    </div>
+    <q-scroll-area style="height: 100%; width: 100%" v-else>
       <div class="q-pa-md row items-start q-gutter-sm">
         <q-chip
           class="pointer non-selectable"
@@ -95,6 +99,7 @@ const onCategoryClick = (category: Category) => {
       </div>
       <div class="pagination-div">
         <q-pagination
+          v-if="categories.length > 0 && !$q.loading.isActive"
           v-model="currentPage"
           :max="totalPage"
           direction-links
@@ -110,7 +115,7 @@ const onCategoryClick = (category: Category) => {
 
 <style scoped>
 .container {
-  height: 87vh;
+  height: 100%;
 }
 
 .pagination-div {

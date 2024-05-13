@@ -215,7 +215,12 @@ const onPageChange = (value: number) => {
         </span>
       </q-chip>
     </div>
-    <q-scroll-area style="height: 100%; width: 100%">
+
+    <div class="q-pa-md" v-if="posts.length === 0 && !$q.loading.isActive">
+      <q-banner rounded class="bg-orange text-white"> 暂无文章 </q-banner>
+    </div>
+
+    <q-scroll-area style="height: 100%; width: 100%" v-else>
       <div class="q-pa-md row items-start q-gutter-md">
         <post-card
           v-for="(post, index) in posts"
@@ -229,6 +234,7 @@ const onPageChange = (value: number) => {
 
       <div class="pagination-div">
         <q-pagination
+          v-if="posts.length > 0 && !$q.loading.isActive"
           v-model="currentPage"
           :max="totalPage"
           direction-links
@@ -243,7 +249,7 @@ const onPageChange = (value: number) => {
 </template>
 <style scoped>
 .container {
-  height: 86vh;
+  height: 100%;
 }
 
 .search-div {

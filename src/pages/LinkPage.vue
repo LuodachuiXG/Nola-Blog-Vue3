@@ -71,7 +71,10 @@ const onLinkClick = (link: Link) => {
 
 <template>
   <div class="container">
-    <div class="q-pa-md row items-start q-gutter-sm">
+    <div class="q-pa-md" v-if="links.length === 0 && !$q.loading.isActive">
+      <q-banner rounded class="bg-orange text-white"> 暂无友情链接 </q-banner>
+    </div>
+    <div class="q-pa-md row items-start q-gutter-sm" v-else>
       <link-card
         v-for="(link, index) in links"
         :link="link"
@@ -82,6 +85,7 @@ const onLinkClick = (link: Link) => {
 
     <div class="pagination-div">
       <q-pagination
+        v-if="links.length > 0 && !$q.loading.isActive"
         v-model="currentPage"
         :max="totalPages"
         direction-links
@@ -95,6 +99,9 @@ const onLinkClick = (link: Link) => {
 </template>
 
 <style scoped>
+.container {
+  height: 100%;
+}
 .pagination-div {
   display: flex;
   justify-content: center;

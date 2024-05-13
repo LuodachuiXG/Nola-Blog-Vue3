@@ -34,6 +34,13 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'diary',
+        component: () => import('pages/DiaryPage.vue'),
+        meta: {
+          displayName: '日记',
+        },
+      },
+      {
         path: 'post',
         component: () => import('pages/PostPage.vue')
       },

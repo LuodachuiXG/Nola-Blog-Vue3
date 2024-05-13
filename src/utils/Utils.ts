@@ -43,12 +43,11 @@ export const getActualUrl = (url: string) => {
 export const setDocumentTitle = (title: string) => {
   const blogInfo = useBlogInfoStore();
   if (blogInfo.blogInfo) {
-    document.title =
-      title +
-      ' - ' +
-      blogInfo.blogInfo.title +
-      ' | ' +
-      blogInfo.blogInfo.subtitle;
+    let blogTitle = blogInfo.blogInfo.title;
+    if (blogInfo.blogInfo.subtitle) {
+      blogTitle += ' | ' + blogInfo.blogInfo.subtitle;
+    }
+    document.title = title + ' - ' + blogTitle;
   } else {
     document.title = title;
   }

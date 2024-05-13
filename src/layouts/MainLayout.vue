@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { inject, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { StoreEnum } from 'src/models/enum/StoreEnum';
 import { getBlogInfo } from 'src/apis/configApi';
@@ -16,6 +16,11 @@ import {
   MenuTargetEnum,
   MenuTargetValueEnum,
 } from 'src/models/enum/MenuTargetEnum';
+import { ICP } from 'src/models/ICP';
+import { getICP } from 'src/apis/icpApi';
+
+
+const globalVars: GlobalVars = inject('globalVars')!!;
 
 const $q = useQuasar();
 const blogInfoStore = useBlogInfoStore();
@@ -32,6 +37,8 @@ const blogInfo = ref<BlogInfo | null>(null);
 const blogger = ref<Blogger | null>(null);
 // 菜单项
 const menus = ref<Array<Menu>>([]);
+// 备案信息
+const icp = ref<ICP | null>(null);
 
 // 当前选择的菜单项
 const currentMenuIndex = ref(-1);
@@ -45,7 +52,7 @@ onMounted(() => {
   const isLoaded = watch(
     () => loadedCount.value,
     () => {
-      if (loadedCount.value >= 3) {
+      if (loadedCount.value >= 4) {
         $q.loading.hide();
         // 结束监听
         isLoaded();
@@ -61,7 +68,6 @@ onMounted(() => {
     }
   );
 
-  //
   // 读取设置
   loadSetting();
   // 初始化博客信息
@@ -70,6 +76,8 @@ onMounted(() => {
   initBlogger();
   // 初始化菜单项
   initMenus();
+  // 初始化备案信息
+  initICP();
 });
 
 /**
@@ -85,11 +93,14 @@ const initBlogInfo = () => {
         window.location.href = '/console';
         return;
       }
-      window.document.title =
-        blogInfo.value.title + ' | ' + blogInfo.value.subtitle;
+      let blogTitle = blogInfo.value.title;
+      if (blogInfo.value?.subtitle) {
+        blogTitle += ' | ' + blogInfo.value.subtitle;
+      }
+      window.document.title = blogTitle;
       // 修改网页图标
       if (blogInfo.value.logo) {
-        updateFavicon(blogInfo.value.logo);
+        updateFavicon(getActualUrl(blogInfo.value.logo));
       }
       loadedCount.value++;
     })
@@ -129,6 +140,20 @@ const initMenus = () => {
     .catch((err) => {
       errorMsg(err);
       $q.loading.hide();
+    });
+};
+
+/**
+ * 初始化备案信息
+ */
+const initICP = () => {
+  getICP()
+    .then((res) => {
+      icp.value = res.data;
+      loadedCount.value++;
+    })
+    .catch((err) => {
+      errorMsg(err);
     });
 };
 
@@ -234,9 +259,10 @@ const onTitleClick = () => {
         <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title>
-          <span class="title pointer" @click="onTitleClick"
-            >{{ blogInfo?.title }} | {{ blogInfo?.subtitle }}</span
-          >
+          <span class="title pointer" @click="onTitleClick">
+            {{ blogInfo?.title }}
+          </span>
+          <span v-if="blogInfo?.subtitle"> | {{ blogInfo?.subtitle }} </span>
         </q-toolbar-title>
         <q-btn
           dense
@@ -256,7 +282,7 @@ const onTitleClick = () => {
 
     <q-drawer
       v-model="leftDrawerOpen"
-      style="position: fixed;"
+      style="position: fixed"
       side="left"
       bordered
       :overlay="route.path.includes('post')"
@@ -327,6 +353,19 @@ const onTitleClick = () => {
         <span class="text-bold" v-if="blogInfo"
           >{{ blogInfo.title }} | {{ blogInfo.subtitle }}</span
         >
+        <span class="icp-info" v-if="icp && !globalVars.isSmallWindow">
+          <span v-if="icp.icp" style="margin-left: 10px">
+            <a class="text-white" href="https://beian.miit.gov.cn/" target="_blank">
+              {{ icp.icp }}
+            </a>
+          </span>
+
+          <span v-if="icp.public" style="margin-left: 10px">
+            <a class="text-white" href="https://beian.mps.gov.cn/#/query/webSearch" target="_blank">
+              {{ icp.public }}
+            </a>
+          </span>
+        </span>
         <span class="powered-by-span">
           Powered by
           <a
@@ -340,7 +379,9 @@ const onTitleClick = () => {
       </div>
     </q-footer>
     <q-page-container>
-      <router-view/>
+      <div style="height: calc(100vh - 85px)">
+        <router-view />
+      </div>
     </q-page-container>
   </q-layout>
 </template>

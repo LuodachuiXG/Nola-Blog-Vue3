@@ -74,7 +74,10 @@ const onTagClick = (tag: Tag) => {
 
 <template>
   <div class="container">
-    <q-scroll-area style="height: 100%; width: 100%">
+    <div class="q-pa-md" v-if="tags.length === 0 && !$q.loading.isActive">
+      <q-banner rounded class="bg-orange text-white"> 暂无标签 </q-banner>
+    </div>
+    <q-scroll-area style="height: 100%; width: 100%" v-else>
       <div class="q-pa-md row items-start q-gutter-sm">
         <q-chip
           class="pointer non-selectable"
@@ -95,6 +98,7 @@ const onTagClick = (tag: Tag) => {
       </div>
       <div class="pagination-div">
         <q-pagination
+          v-if="tags.length > 0 && !$q.loading.isActive"
           v-model="currentPage"
           :max="totalPage"
           direction-links
@@ -110,7 +114,7 @@ const onTagClick = (tag: Tag) => {
 
 <style scoped>
 .container {
-  height: 87vh;
+  height: 100%;
 }
 
 .pagination-div {
